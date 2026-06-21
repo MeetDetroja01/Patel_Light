@@ -1,0 +1,16 @@
+
+server:- https://supabase.com/
+server id pass:- 	meetdetroja123@gmail.com(c^P-.jd88(b6+^')
+		meetdetroja123@gmail.com's Project(c^P-.jd88(b6+^')
+		patel-light Project(Patel@Light123)
+domain:- https://app.netlify.com/
+link:-patel-light.netlify.app
+
+
+Username :-patellight
+Password:- patel@1234
+
+
+mongoDB id:- meetdetroja123_db_user
+	pass:- lZlTnf7WYuhO6rnN
+mongodb+srv://meetdetroja123_db_user:lZlTnf7WYuhO6rnN@patellight.7n7hxg1.mongodb.net/?appName=PatelLight

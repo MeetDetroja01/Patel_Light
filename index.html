@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patel Light - Customer Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f0f2f5;color:#111;min-height:100vh}
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1a237e 0%,#283593 60%,#3949ab 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+#login-box{background:#fff;border-radius:20px;padding:36px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+#login-box .logo{text-align:center;margin-bottom:28px}
+#login-box .logo div{font-size:48px;margin-bottom:8px}
+#login-box .logo h2{font-size:22px;font-weight:700;color:#1a237e;margin-bottom:4px}
+#login-box .logo p{font-size:13px;color:#888}
+#login-box .field-group{margin-bottom:16px}
+#login-box label{display:block;font-size:12px;color:#555;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+#login-box input{width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;outline:none;transition:border 0.2s}
+#login-box input:focus{border-color:#1a237e;box-shadow:0 0 0 3px rgba(26,35,126,0.08)}
+#login-btn{width:100%;padding:14px;background:#1a237e;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;transition:background 0.2s}
+#login-btn:hover{background:#283593}
+#login-error{color:#b71c1c;font-size:13px;text-align:center;margin-top:12px;padding:8px;background:#fdecea;border-radius:6px;display:none}
+#app-screen{display:none}
+.header{background:#1a237e;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.header h1{font-size:20px;font-weight:600;letter-spacing:0.5px}
+.header span{font-size:13px;opacity:0.8;background:rgba(255,255,255,0.15);padding:4px 10px;border-radius:20px}
+.nav{display:flex;background:#fff;border-bottom:1px solid #e0e0e0;position:sticky;top:52px;z-index:99;box-shadow:0 1px 4px rgba(0,0,0,0.05)}
+.nav button{flex:1;padding:12px 4px;font-size:13px;background:none;border:none;border-bottom:3px solid transparent;color:#666;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.2s}
+.nav button.active{color:#1a237e;border-bottom-color:#1a237e;font-weight:600}
+.nav button:hover{background:#f5f5f5}
+.page{display:none;padding:20px;max-width:900px;margin:0 auto}
+.page.active{display:block}
+.card{background:#fff;border-radius:12px;border:1px solid #e8e8e8;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.card-title{font-size:16px;font-weight:600;margin-bottom:16px;color:#1a237e;border-bottom:1px solid #e8eaf6;padding-bottom:10px}
+.field-group{margin-bottom:14px}
+label{display:block;font-size:12px;color:#555;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+input,select,textarea{width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#111;outline:none;transition:border 0.2s}
+input:focus,select:focus,textarea:focus{border-color:#1a237e;box-shadow:0 0 0 3px rgba(26,35,126,0.08)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.btn-primary{width:100%;padding:13px;background:#1a237e;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:background 0.2s}
+.btn-primary:hover{background:#283593}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;color:#333;transition:all 0.2s;font-family:inherit}
+.btn-sm:hover{background:#f5f5f5}
+.btn-danger{background:#fdecea;color:#b71c1c;border-color:#ffcdd2}
+.btn-danger:hover{background:#ffcdd2}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a237e;color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;z-index:9999;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.2);min-width:200px;text-align:center}
+.search-bar{position:relative;margin-bottom:14px}
+.search-bar input{padding-left:42px;font-size:15px;padding-top:12px;padding-bottom:12px}
+.search-bar span{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:20px}
+.filter-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.filter-row select{min-width:150px;flex:1;font-size:13px}
+.customer-card{background:#fff;border-radius:10px;border:1px solid #e8e8e8;padding:14px 16px;margin-bottom:10px;transition:box-shadow 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.customer-card:hover{box-shadow:0 3px 12px rgba(0,0,0,0.1)}
+.customer-card .cname{font-size:16px;font-weight:600;margin-bottom:2px;color:#1a237e}
+.customer-card .cshop{font-size:13px;color:#666;margin-bottom:8px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+.tag-blue{background:#e8eaf6;color:#1a237e}
+.tag-green{background:#e8f5e9;color:#1b5e20}
+.tag-amber{background:#fff8e1;color:#e65100}
+.tag-pink{background:#fce4ec;color:#880e4f}
+.meta{font-size:12px;color:#888;margin-top:4px}
+.amount{font-size:18px;font-weight:700;color:#1a237e;margin-top:6px}
+.actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f5f5f5}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:#fff;border-radius:12px;border:1px solid #e8e8e8;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.stat .s-label{font-size:12px;color:#888;margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.3px}
+.stat .s-val{font-size:24px;font-weight:700;color:#1a237e}
+.empty{text-align:center;padding:50px 20px;color:#aaa}
+.empty span{font-size:48px;display:block;margin-bottom:12px}
+.pagination{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:20px;font-size:14px;color:#555}
+.pagination button{padding:8px 18px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:14px}
+.pagination button:hover:not(:disabled){background:#e8eaf6;border-color:#1a237e;color:#1a237e}
+.pagination button:disabled{opacity:0.3;cursor:not-allowed}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-header h2{font-size:18px;font-weight:600;color:#1a237e}
+.modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:#888}
+.loader{text-align:center;padding:40px;color:#888;font-size:14px}
+.results-count{font-size:13px;color:#888;margin-bottom:12px;padding:6px 12px;background:#f5f5f5;border-radius:6px}
+.subtabs{display:flex;gap:0;margin-bottom:16px;background:#fff;border-radius:10px;border:1px solid #e8e8e8;overflow:hidden}
+.subtab{flex:1;padding:10px 4px;font-size:12px;font-weight:600;border:none;background:#fff;color:#666;cursor:pointer;font-family:inherit;border-left:1px solid #e8e8e8;transition:all 0.2s}
+.subtab:first-child{border-left:none}
+.subtab.active{background:#1a237e;color:#fff}
+.rank-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f5f5f5}
+.rank-row:last-child{border-bottom:none}
+.rank-num{min-width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-weight:600;font-size:14px;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-sub{font-size:12px;color:#888;margin-top:2px}
+.rank-bar-bg{margin-top:5px;background:#e8eaf6;border-radius:4px;height:6px;overflow:hidden}
+.rank-bar-fill{background:#1a237e;height:100%;border-radius:4px}
+.rank-val{font-weight:700;color:#1a237e;font-size:14px;white-space:nowrap;text-align:right;min-width:90px}
+.ctrl-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.ctrl-row select,.ctrl-row input{flex:1;min-width:130px;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit}
+@media(max-width:600px){
+  .row2,.row3{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .page{padding:12px}
+  .subtab{font-size:11px;padding:9px 2px}
+}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div id="login-box">
+    <div class="logo">
+      <div>⚡</div>
+      <h2>Patel Light</h2>
+      <p>Customer Manager — Please login</p>
+    </div>
+    <div class="field-group">
+      <label>Username</label>
+      <input type="text" id="login-user" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="field-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button id="login-btn" onclick="doLogin()">🔐 Login</button>
+    <div id="login-error">❌ Wrong username or password!</div>
+  </div>
+</div>
+
+<div id="app-screen">
+<div class="header">
+  <h1>⚡ Patel Light</h1>
+  <span id="cust-count">Loading...</span>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="showPage('add',this)">➕ Add Bill</button>
+  <button onclick="showPage('list',this)">📋 Customers</button>
+  <button onclick="showPage('search',this)">🔍 Search</button>
+  <button onclick="showPage('analytics',this)">📊 Analytics</button>
+</div>
+
+<!-- ADD BILL -->
+<div id="page-add" class="page active">
+  <div class="card">
+    <div class="card-title">Add New Bill</div>
+    <div class="row2">
+      <div class="field-group"><label>Date</label><input type="date" id="f-date"></div>
+      <div class="field-group"><label>Bill Number</label><input type="text" id="f-bill" placeholder="e.g. PL-2024-001"></div>
+    </div>
+    <div class="row2">
+      <div class="field-group"><label>Customer Name</label><input type="text" id="f-name" placeholder="Full name"></div>
+      <div class="field-group"><label>Mobile Number</label><input type="tel" id="f-mobile" placeholder="10 digit number"></div>
+    </div>
+    <div class="field-group"><label>Shop Name</label><input type="text" id="f-shop" placeholder="Shop or company name"></div>
+    <div class="row3">
+      <div class="field-group"><label>City</label><input type="text" id="f-city" placeholder="City"></div>
+      <div class="field-group"><label>State</label><input type="text" id="f-state" placeholder="State"></div>
+      <div class="field-group"><label>Transport Name</label><input type="text" id="f-transport" placeholder="Transport company"></div>
+    </div>
+    <div class="field-group"><label>Items Sent</label><textarea id="f-items" rows="3" placeholder="List all items sent to this customer..."></textarea></div>
+    <div class="field-group"><label>Total Bill Amount (₹)</label><input type="number" id="f-amount" placeholder="e.g. 15000"></div>
+    <button class="btn-primary" onclick="saveCustomer()">💾 Save Bill</button>
+  </div>
+</div>
+
+<!-- CUSTOMERS LIST -->
+<div id="page-list" class="page">
+  <div class="filter-row">
+    <select id="filter-state" onchange="applyFilters()"><option value="">All States</option></select>
+    <select id="filter-city" onchange="applyFilters()"><option value="">All Cities</option></select>
+    <select id="filter-transport" onchange="applyFilters()"><option value="">All Transport</option></select>
+  </div>
+  <div id="list-container"><div class="loader">⏳ Loading customers...</div></div>
+  <div class="pagination">
+    <button id="prev-btn" onclick="changePage(-1)" disabled>← Previous</button>
+    <span id="page-info">Page 1</span>
+    <button id="next-btn" onclick="changePage(1)">Next →</button>
+  </div>
+</div>
+
+<!-- SEARCH + RANKED LISTS -->
+<div id="page-search" class="page">
+  <div class="subtabs">
+    <button class="subtab active" id="stab-search" onclick="switchTab('search')">🔍 Search</button>
+    <button class="subtab" id="stab-city" onclick="switchTab('city')">🏙️ Cities</button>
+    <button class="subtab" id="stab-state" onclick="switchTab('state')">🗺️ States</button>
+    <button class="subtab" id="stab-transport" onclick="switchTab('transport')">🚚 Transport</button>
+    <button class="subtab" id="stab-customer" onclick="switchTab('customer')">💰 Customers</button>
+  </div>
+
+  <!-- Search -->
+  <div id="tab-search">
+    <div class="search-bar"><span>🔍</span><input type="text" id="search-input" placeholder="Search name, city, mobile, shop, state..." oninput="doSearch()"></div>
+    <div class="filter-row">
+      <select id="search-field" onchange="doSearch()">
+        <option value="all">All Fields</option>
+        <option value="customer_name">Customer Name</option>
+        <option value="shop_name">Shop Name</option>
+        <option value="city">City</option>
+        <option value="state">State</option>
+        <option value="mobile_number">Mobile Number</option>
+        <option value="transport_name">Transport Name</option>
+        <option value="bill_number">Bill Number</option>
+      </select>
+    </div>
+    <div id="search-results"><div class="empty"><span>🔍</span>Type above to search customers</div></div>
+  </div>
+
+  <!-- Cities Ranked -->
+  <div id="tab-city" style="display:none">
+    <div class="ctrl-row">
+      <select id="city-sort" onchange="loadCities()">
+        <option value="revenue">Sort: Total Revenue</option>
+        <option value="count">Sort: No. of Bills</option>
+        <option value="avg">Sort: Average Bill</option>
+      </select>
+      <input type="text" id="city-filter" placeholder="Filter city name..." oninput="loadCities()">
+    </div>
+    <div id="city-list"><div class="loader">⏳ Loading...</div></div>
+  </div>
+
+  <!-- States Ranked -->
+  <div id="tab-state" style="display:none">
+    <div class="ctrl-row">
+      <select id="state-sort" onchange="loadStates()">
+        <option value="revenue">Sort: Total Revenue</option>
+        <option value="count">Sort: No. of Bills</option>
+        <option value="avg">Sort: Average Bill</option>
+      </select>
+      <input type="text" id="state-filter" placeholder="Filter state name..." oninput="loadStates()">
+    </div>
+    <div id="state-list"><div class="loader">⏳ Loading...</div></div>
+  </div>
+
+  <!-- Transport Ranked -->
+  <div id="tab-transport" style="display:none">
+    <div class="ctrl-row">
+      <select id="transport-sort" onchange="loadTransport()">
+        <option value="count">Sort: No. of Bills</option>
+        <option value="revenue">Sort: Total Revenue</option>
+        <option value="avg">Sort: Average Bill</option>
+      </select>
+      <input type="text" id="transport-filter" placeholder="Filter transport name..." oninput="loadTransport()">
+    </div>
+    <div id="transport-list"><div class="loader">⏳ Loading...</div></div>
+  </div>
+
+  <!-- Customers Ranked -->
+  <div id="tab-customer" style="display:none">
+    <div class="ctrl-row">
+      <select id="customer-sort" onchange="loadCustomerRank()">
+        <option value="amount">Sort: Bill Amount</option>
+        <option value="name">Sort: Name A-Z</option>
+      </select>
+      <input type="text" id="customer-filter" placeholder="Filter name, city..." oninput="loadCustomerRank()">
+    </div>
+    <div id="customer-list"><div class="loader">⏳ Loading...</div></div>
+  </div>
+</div>
+
+<!-- ANALYTICS -->
+<div id="page-analytics" class="page">
+  <div class="stat-grid">
+    <div class="stat"><div class="s-label">Total Bills</div><div class="s-val" id="a-total">—</div></div>
+    <div class="stat"><div class="s-label">Total Revenue</div><div class="s-val" id="a-revenue">—</div></div>
+    <div class="stat"><div class="s-label">Average Bill</div><div class="s-val" id="a-avg">—</div></div>
+    <div class="stat"><div class="s-label">Cities Covered</div><div class="s-val" id="a-cities">—</div></div>
+    <div class="stat"><div class="s-label">States Covered</div><div class="s-val" id="a-states">—</div></div>
+    <div class="stat"><div class="s-label">Transports Used</div><div class="s-val" id="a-transports">—</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🏙️ Top Cities by Revenue</div>
+    <div id="city-chart"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🗺️ Top States by Customers</div>
+    <div id="state-chart"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🚚 Top Transports Used</div>
+    <div id="transport-chart"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">💰 Top 10 Customers by Bill Amount</div>
+    <div id="top-customers"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="edit-modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>✏️ Edit Bill</h2>
+      <button class="modal-close" onclick="closeEdit()">✕</button>
+    </div>
+    <input type="hidden" id="e-id">
+    <div class="row2">
+      <div class="field-group"><label>Date</label><input type="date" id="e-date"></div>
+      <div class="field-group"><label>Bill Number</label><input type="text" id="e-bill"></div>
+    </div>
+    <div class="row2">
+      <div class="field-group"><label>Customer Name</label><input type="text" id="e-name"></div>
+      <div class="field-group"><label>Mobile</label><input type="tel" id="e-mobile"></div>
+    </div>
+    <div class="field-group"><label>Shop Name</label><input type="text" id="e-shop"></div>
+    <div class="row3">
+      <div class="field-group"><label>City</label><input type="text" id="e-city"></div>
+      <div class="field-group"><label>State</label><input type="text" id="e-state"></div>
+      <div class="field-group"><label>Transport</label><input type="text" id="e-transport"></div>
+    </div>
+    <div class="field-group"><label>Items Sent</label><textarea id="e-items" rows="3"></textarea></div>
+    <div class="field-group"><label>Total Amount (₹)</label><input type="number" id="e-amount"></div>
+    <button class="btn-primary" onclick="updateCustomer()">✅ Update Bill</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://oapzaqixzfvmegclqrem.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hcHphcWl4emZ2bWVnY2xxcmVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTg2OTAsImV4cCI6MjA5NjczNDY5MH0.cN8wSA75e-3TBXdW4m4-h1PoT4lBPgenu6rRMX5nmP4';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentPage = 0;
+const PAGE_SIZE = 20;
+let totalCount = 0;
+let activeFilters = {};
+let allData = null;
+let currentSearchTab = 'search';
+
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'list') { currentPage = 0; loadList(); }
+  if (name === 'analytics') loadAnalytics();
+  if (name === 'search') { allData = null; }
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? '#b71c1c' : '#1a237e';
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function switchTab(name) {
+  currentSearchTab = name;
+  ['search','city','state','transport','customer'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+    document.getElementById('stab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'city') loadCities();
+  if (name === 'state') loadStates();
+  if (name === 'transport') loadTransport();
+  if (name === 'customer') loadCustomerRank();
+}
+
+async function getAllData() {
+  if (allData) return allData;
+  const { data } = await db.from('customers').select('id,customer_name,shop_name,mobile_number,city,state,transport_name,total_amount,bill_number,date');
+  allData = data || [];
+  return allData;
+}
+
+function medals(i) {
+  return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1);
+}
+function rankBg(i) {
+  return i === 0 ? '#fff8e1' : i === 1 ? '#f5f5f5' : i === 2 ? '#fbe9e7' : '#e8eaf6';
+}
+
+function groupBy(data, field, sortBy) {
+  const map = {};
+  data.forEach(d => {
+    const key = (d[field] || '').trim();
+    if (!key) return;
+    if (!map[key]) map[key] = { label: key, count: 0, revenue: 0 };
+    map[key].count++;
+    map[key].revenue += Number(d.total_amount || 0);
+  });
+  Object.values(map).forEach(v => v.avg = v.count ? v.revenue / v.count : 0);
+  return Object.values(map).sort((a, b) => b[sortBy] - a[sortBy]);
+}
+
+function renderRankList(containerId, items, type) {
+  const el = document.getElementById(containerId);
+  if (!items.length) { el.innerHTML = '<div class="empty"><span>📊</span>No data yet — add some bills first!</div>'; return; }
+  const max = items[0][type === 'revenue' ? 'revenue' : type === 'avg' ? 'avg' : 'count'];
+  const totalAll = items.reduce((s, i) => s + i[type === 'revenue' ? 'revenue' : type === 'avg' ? 'avg' : 'count'], 0);
+  el.innerHTML = '<div style="font-size:12px;color:#888;margin-bottom:8px;padding:0 4px">Showing ' + items.length + ' entries</div>' +
+    items.map((item, i) => {
+      const val = type === 'revenue' ? item.revenue : type === 'avg' ? item.avg : item.count;
+      const pct = max ? Math.round((val / max) * 100) : 0;
+      const share = totalAll ? Math.round((val / totalAll) * 100) : 0;
+      const valLabel = (type === 'revenue' || type === 'avg') ? '₹' + Math.round(val).toLocaleString('en-IN') : val + ' bills';
+      return '<div class="rank-row">' +
+        '<div class="rank-num" style="background:' + rankBg(i) + ';font-size:' + (i < 3 ? '18px' : '12px') + '">' + medals(i) + '</div>' +
+        '<div class="rank-info">' +
+          '<div class="rank-name">' + item.label + '</div>' +
+          '<div class="rank-sub">' + item.count + ' bills &nbsp;|&nbsp; Total: ₹' + Math.round(item.revenue).toLocaleString('en-IN') + ' &nbsp;|&nbsp; Avg: ₹' + Math.round(item.avg).toLocaleString('en-IN') + ' &nbsp;|&nbsp; Share: ' + share + '%</div>' +
+          '<div class="rank-bar-bg"><div class="rank-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+        '<div class="rank-val">' + valLabel + '</div>' +
+      '</div>';
+    }).join('');
+}
+
+async function loadCities() {
+  const data = await getAllData();
+  const sort = document.getElementById('city-sort').value;
+  const filter = (document.getElementById('city-filter').value || '').toLowerCase();
+  let items = groupBy(data, 'city', sort);
+  if (filter) items = items.filter(i => i.label.toLowerCase().includes(filter));
+  renderRankList('city-list', items, sort);
+}
+
+async function loadStates() {
+  const data = await getAllData();
+  const sort = document.getElementById('state-sort').value;
+  const filter = (document.getElementById('state-filter').value || '').toLowerCase();
+  let items = groupBy(data, 'state', sort);
+  if (filter) items = items.filter(i => i.label.toLowerCase().includes(filter));
+  renderRankList('state-list', items, sort);
+}
+
+async function loadTransport() {
+  const data = await getAllData();
+  const sort = document.getElementById('transport-sort').value;
+  const filter = (document.getElementById('transport-filter').value || '').toLowerCase();
+  let items = groupBy(data, 'transport_name', sort);
+  if (filter) items = items.filter(i => i.label.toLowerCase().includes(filter));
+  renderRankList('transport-list', items, sort);
+}
+
+async function loadCustomerRank() {
+  const data = await getAllData();
+  const sort = document.getElementById('customer-sort').value;
+  const filter = (document.getElementById('customer-filter').value || '').toLowerCase();
+  let items = [...data];
+  if (filter) items = items.filter(d => (d.customer_name || '').toLowerCase().includes(filter) || (d.city || '').toLowerCase().includes(filter));
+  if (sort === 'amount') items.sort((a, b) => Number(b.total_amount) - Number(a.total_amount));
+  else items.sort((a, b) => (a.customer_name || '').localeCompare(b.customer_name || ''));
+  const el = document.getElementById('customer-list');
+  if (!items.length) { el.innerHTML = '<div class="empty"><span>👤</span>No customers found</div>'; return; }
+  el.innerHTML = '<div style="font-size:12px;color:#888;margin-bottom:8px;padding:0 4px">Showing ' + items.length + ' customers</div>' +
+    items.map((c, i) =>
+      '<div class="rank-row">' +
+        '<div class="rank-num" style="background:' + rankBg(i) + ';font-size:' + (i < 3 ? '18px' : '12px') + '">' + medals(i) + '</div>' +
+        '<div class="rank-info">' +
+          '<div class="rank-name">' + (c.customer_name || '—') + '</div>' +
+          '<div class="rank-sub">' + (c.shop_name || '—') + ' &nbsp;|&nbsp; 📱 ' + (c.mobile_number || '—') + ' &nbsp;|&nbsp; 📍 ' + (c.city || '—') + ', ' + (c.state || '—') + '</div>' +
+          '<div class="rank-sub">🚚 ' + (c.transport_name || '—') + ' &nbsp;|&nbsp; 🧾 ' + (c.bill_number || '—') + ' &nbsp;|&nbsp; 📅 ' + (c.date || '—') + '</div>' +
+        '</div>' +
+        '<div class="rank-val">₹' + Number(c.total_amount || 0).toLocaleString('en-IN') + '</div>' +
+      '</div>'
+    ).join('');
+}
+
+async function saveCustomer() {
+  const data = {
+    date: document.getElementById('f-date').value,
+    bill_number: document.getElementById('f-bill').value.trim(),
+    customer_name: document.getElementById('f-name').value.trim(),
+    mobile_number: document.getElementById('f-mobile').value.trim(),
+    shop_name: document.getElementById('f-shop').value.trim(),
+    city: document.getElementById('f-city').value.trim(),
+    state: document.getElementById('f-state').value.trim(),
+    transport_name: document.getElementById('f-transport').value.trim(),
+    items_sent: document.getElementById('f-items').value.trim(),
+    total_amount: parseFloat(document.getElementById('f-amount').value) || 0
+  };
+  if (!data.customer_name || !data.bill_number || !data.date) { showToast('Please fill Date, Bill Number and Customer Name', true); return; }
+  const btn = document.querySelector('#page-add .btn-primary');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  const { error } = await db.from('customers').insert([data]);
+  btn.textContent = '💾 Save Bill'; btn.disabled = false;
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('✅ Bill saved successfully!');
+  allData = null;
+  ['f-bill','f-name','f-mobile','f-shop','f-city','f-state','f-transport','f-items','f-amount'].forEach(id => document.getElementById(id).value = '');
+  updateCount();
+}
+
+async function updateCount() {
+  const { count } = await db.from('customers').select('*', { count: 'exact', head: true });
+  document.getElementById('cust-count').textContent = (count || 0).toLocaleString('en-IN') + ' bills';
+}
+
+async function loadList() {
+  const container = document.getElementById('list-container');
+  container.innerHTML = '<div class="loader">⏳ Loading...</div>';
+  let query = db.from('customers').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
+  if (activeFilters.state) query = query.ilike('state', activeFilters.state);
+  if (activeFilters.city) query = query.ilike('city', activeFilters.city);
+  if (activeFilters.transport) query = query.ilike('transport_name', activeFilters.transport);
+  const { data, count, error } = await query;
+  if (error) { container.innerHTML = '<div class="empty">Error loading data</div>'; return; }
+  totalCount = count || 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  document.getElementById('page-info').textContent = 'Page ' + (currentPage + 1) + ' of ' + totalPages + ' (' + totalCount.toLocaleString('en-IN') + ' total)';
+  document.getElementById('prev-btn').disabled = currentPage === 0;
+  document.getElementById('next-btn').disabled = (currentPage + 1) * PAGE_SIZE >= totalCount;
+  if (!data || data.length === 0) { container.innerHTML = '<div class="empty"><span>📋</span>No customers found</div>'; return; }
+  container.innerHTML = data.map(c => customerCard(c)).join('');
+  await loadFilterOptions();
+}
+
+function customerCard(c) {
+  return '<div class="customer-card">' +
+    '<div class="cname">' + (c.customer_name || '') + '</div>' +
+    '<div class="cshop">' + (c.shop_name || '—') + '</div>' +
+    '<div class="tags">' +
+      '<span class="tag tag-blue">📍 ' + (c.city || '—') + ', ' + (c.state || '—') + '</span>' +
+      '<span class="tag tag-amber">🚚 ' + (c.transport_name || '—') + '</span>' +
+      '<span class="tag tag-green">🧾 ' + (c.bill_number || '') + '</span>' +
+      '<span class="tag tag-pink">📅 ' + (c.date || '—') + '</span>' +
+    '</div>' +
+    '<div class="meta">📱 ' + (c.mobile_number || '—') + '</div>' +
+    '<div class="meta">📦 ' + (c.items_sent || '').substring(0, 80) + ((c.items_sent || '').length > 80 ? '...' : '') + '</div>' +
+    '<div class="amount">₹' + Number(c.total_amount || 0).toLocaleString('en-IN') + '</div>' +
+    '<div class="actions">' +
+      '<button class="btn-sm" onclick=\'openEdit(' + JSON.stringify(c).replace(/'/g, "&#39;") + ')\'>✏️ Edit</button>' +
+      '<button class="btn-sm btn-danger" onclick="deleteCustomer(' + c.id + ')">🗑️ Delete</button>' +
+    '</div>' +
+  '</div>';
+}
+
+async function loadFilterOptions() {
+  const { data } = await db.from('customers').select('state,city,transport_name');
+  if (!data) return;
+  const states = [...new Set(data.map(d => d.state).filter(Boolean))].sort();
+  const cities = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
+  const transports = [...new Set(data.map(d => d.transport_name).filter(Boolean))].sort();
+  const fill = (id, opts, label) => {
+    const el = document.getElementById(id); const cur = el.value;
+    el.innerHTML = '<option value="">All ' + label + '</option>' + opts.map(o => '<option value="' + o + '"' + (o === cur ? ' selected' : '') + '>' + o + '</option>').join('');
+  };
+  fill('filter-state', states, 'States');
+  fill('filter-city', cities, 'Cities');
+  fill('filter-transport', transports, 'Transport');
+}
+
+function applyFilters() {
+  activeFilters.state = document.getElementById('filter-state').value;
+  activeFilters.city = document.getElementById('filter-city').value;
+  activeFilters.transport = document.getElementById('filter-transport').value;
+  currentPage = 0; loadList();
+}
+
+function changePage(dir) { currentPage += dir; loadList(); window.scrollTo(0, 0); }
+
+let searchTimer;
+function doSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(execSearch, 350); }
+
+async function execSearch() {
+  const term = document.getElementById('search-input').value.trim();
+  const field = document.getElementById('search-field').value;
+  const container = document.getElementById('search-results');
+  if (!term) { container.innerHTML = '<div class="empty"><span>🔍</span>Type above to search customers</div>'; return; }
+  container.innerHTML = '<div class="loader">⏳ Searching...</div>';
+  let query = db.from('customers').select('*').limit(500);
+  if (field === 'all') {
+    query = query.or('customer_name.ilike.%' + term + '%,shop_name.ilike.%' + term + '%,city.ilike.%' + term + '%,state.ilike.%' + term + '%,mobile_number.ilike.%' + term + '%,transport_name.ilike.%' + term + '%,bill_number.ilike.%' + term + '%');
+  } else {
+    query = query.ilike(field, '%' + term + '%');
+  }
+  const { data, error } = await query;
+  if (error) { container.innerHTML = '<div class="empty">Search error</div>'; return; }
+  if (!data || data.length === 0) { container.innerHTML = '<div class="empty"><span>🔍</span>No results for "' + term + '"</div>'; return; }
+  container.innerHTML = '<div class="results-count">✅ ' + data.length + ' result(s) found for "' + term + '"</div>' + data.map(c => customerCard(c)).join('');
+}
+
+async function loadAnalytics() {
+  const { data, count } = await db.from('customers').select('customer_name,mobile_number,shop_name,city,state,transport_name,total_amount', { count: 'exact' });
+  if (!data) return;
+  const total = count || data.length;
+  const revenue = data.reduce((s, d) => s + Number(d.total_amount || 0), 0);
+  const avg = total ? revenue / total : 0;
+  const cities = [...new Set(data.map(d => d.city).filter(Boolean))].length;
+  const states = [...new Set(data.map(d => d.state).filter(Boolean))].length;
+  const transports = [...new Set(data.map(d => d.transport_name).filter(Boolean))].length;
+  document.getElementById('a-total').textContent = total.toLocaleString('en-IN');
+  document.getElementById('a-revenue').textContent = '₹' + Math.round(revenue).toLocaleString('en-IN');
+  document.getElementById('a-avg').textContent = '₹' + Math.round(avg).toLocaleString('en-IN');
+  document.getElementById('a-cities').textContent = cities;
+  document.getElementById('a-states').textContent = states;
+  document.getElementById('a-transports').textContent = transports;
+
+  const cityRev = groupBy(data, 'city', 'revenue').slice(0, 10);
+  const stateCnt = groupBy(data, 'state', 'count').slice(0, 10);
+  const transCnt = groupBy(data, 'transport_name', 'count').slice(0, 10);
+
+  renderAnalyticsChart('city-chart', cityRev, 'revenue');
+  renderAnalyticsChart('state-chart', stateCnt, 'count');
+  renderAnalyticsChart('transport-chart', transCnt, 'count');
+
+  const topCust = [...data].sort((a, b) => Number(b.total_amount) - Number(a.total_amount)).slice(0, 10);
+  document.getElementById('top-customers').innerHTML = topCust.length === 0
+    ? '<div style="color:#aaa;text-align:center;padding:20px;font-size:13px">No data yet</div>'
+    : topCust.map((c, i) =>
+      '<div class="rank-row">' +
+        '<div class="rank-num" style="background:' + rankBg(i) + ';font-size:' + (i < 3 ? '18px' : '12px') + '">' + medals(i) + '</div>' +
+        '<div class="rank-info">' +
+          '<div class="rank-name">' + (c.customer_name || '—') + '</div>' +
+          '<div class="rank-sub">' + (c.shop_name || '—') + ' &nbsp;|&nbsp; 📱 ' + (c.mobile_number || '—') + ' &nbsp;|&nbsp; 📍 ' + (c.city || '—') + '</div>' +
+        '</div>' +
+        '<div class="rank-val">₹' + Number(c.total_amount || 0).toLocaleString('en-IN') + '</div>' +
+      '</div>'
+    ).join('');
+}
+
+function renderAnalyticsChart(id, items, type) {
+  const el = document.getElementById(id);
+  if (!items.length) { el.innerHTML = '<div style="color:#aaa;text-align:center;padding:20px;font-size:13px">No data yet</div>'; return; }
+  const max = items[0][type === 'revenue' ? 'revenue' : 'count'];
+  el.innerHTML = items.map((item, i) => {
+    const val = type === 'revenue' ? item.revenue : item.count;
+    const pct = max ? Math.round((val / max) * 100) : 0;
+    const valLabel = type === 'revenue' ? '₹' + Math.round(val).toLocaleString('en-IN') : val + ' customers';
+    return '<div class="rank-row">' +
+      '<div class="rank-num" style="background:' + rankBg(i) + ';font-size:' + (i < 3 ? '18px' : '12px') + '">' + medals(i) + '</div>' +
+      '<div class="rank-info">' +
+        '<div class="rank-name">' + item.label + '</div>' +
+        '<div class="rank-sub">' + item.count + ' bills &nbsp;|&nbsp; Avg: ₹' + Math.round(item.avg).toLocaleString('en-IN') + '</div>' +
+        '<div class="rank-bar-bg"><div class="rank-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<div class="rank-val">' + valLabel + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function openEdit(c) {
+  document.getElementById('e-id').value = c.id;
+  document.getElementById('e-date').value = c.date || '';
+  document.getElementById('e-bill').value = c.bill_number || '';
+  document.getElementById('e-name').value = c.customer_name || '';
+  document.getElementById('e-mobile').value = c.mobile_number || '';
+  document.getElementById('e-shop').value = c.shop_name || '';
+  document.getElementById('e-city').value = c.city || '';
+  document.getElementById('e-state').value = c.state || '';
+  document.getElementById('e-transport').value = c.transport_name || '';
+  document.getElementById('e-items').value = c.items_sent || '';
+  document.getElementById('e-amount').value = c.total_amount || '';
+  document.getElementById('edit-modal-bg').classList.add('open');
+}
+
+function closeEdit() { document.getElementById('edit-modal-bg').classList.remove('open'); }
+
+async function updateCustomer() {
+  const id = document.getElementById('e-id').value;
+  const data = {
+    date: document.getElementById('e-date').value,
+    bill_number: document.getElementById('e-bill').value.trim(),
+    customer_name: document.getElementById('e-name').value.trim(),
+    mobile_number: document.getElementById('e-mobile').value.trim(),
+    shop_name: document.getElementById('e-shop').value.trim(),
+    city: document.getElementById('e-city').value.trim(),
+    state: document.getElementById('e-state').value.trim(),
+    transport_name: document.getElementById('e-transport').value.trim(),
+    items_sent: document.getElementById('e-items').value.trim(),
+    total_amount: parseFloat(document.getElementById('e-amount').value) || 0
+  };
+  const { error } = await db.from('customers').update(data).eq('id', id);
+  if (error) { showToast('Error: ' + error.message, true); return; }
+  showToast('✅ Bill updated successfully!');
+  allData = null;
+  closeEdit();
+  loadList();
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this bill? This cannot be undone.')) return;
+  const { error } = await db.from('customers').delete().eq('id', id);
+  if (error) { showToast('Error deleting', true); return; }
+  showToast('🗑️ Deleted successfully');
+  allData = null;
+  loadList();
+  updateCount();
+}
+
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+
+// ---- LOGIN ----
+const USERS = {
+  'patellight': 'patel@1234',   // Username : Password
+  'admin': 'light@5678'          // You can add more users here
+};
+
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-error');
+  if (USERS[user] && USERS[user] === pass) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    updateCount();
+    err.style.display = 'none';
+  } else {
+    err.style.display = 'block';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  }
+}
+</script>
+</div>
+</body>
+</html>
