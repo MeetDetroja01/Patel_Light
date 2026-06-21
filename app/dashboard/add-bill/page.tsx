@@ -29,10 +29,10 @@ export default function AddBillPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.customer_name || !form.bill_number || !form.date) {
+    if (!form.customer_name || !form.date || !form.shop_name || !form.state || !form.city || !form.transport_name) {
       toast({
         title: "Missing fields",
-        description: "Date, Bill Number and Customer Name are required.",
+        description: "Date, Customer Name, Shop Name, State, City and Transport are required.",
         variant: "destructive",
       });
       return;
@@ -78,10 +78,10 @@ export default function AddBillPage() {
                   onChange={(e) => set("date", e.target.value)}
                   className="input-base" required />
               </Field>
-              <Field label="Bill Number" required>
+              <Field label="Bill Number">
                 <input type="text" value={form.bill_number}
                   onChange={(e) => set("bill_number", e.target.value)}
-                  placeholder="e.g. PL-2024-001" className="input-base" required />
+                  placeholder="e.g. PL-2024-001" className="input-base" />
               </Field>
             </div>
 
@@ -100,7 +100,7 @@ export default function AddBillPage() {
             </div>
 
             {/* Shop Name */}
-            <Field label="Shop Name">
+            <Field label="Shop Name" required>
               <input type="text" value={form.shop_name}
                 onChange={(e) => set("shop_name", e.target.value)}
                 placeholder="Shop or company name" className="input-base" />
@@ -113,8 +113,9 @@ export default function AddBillPage() {
                 cityValue={form.city}
                 onStateChange={(v) => set("state", v)}
                 onCityChange={(v) => set("city", v)}
+                required
               />
-              <Field label="Transport Name">
+              <Field label="Transport Name" required>
                 <input type="text" value={form.transport_name}
                   onChange={(e) => set("transport_name", e.target.value)}
                   placeholder="Transport company" className="input-base" />

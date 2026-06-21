@@ -6,9 +6,10 @@ interface Props {
   cityValue: string;
   onStateChange: (state: string) => void;
   onCityChange: (city: string) => void;
+  required?: boolean;
 }
 
-export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityChange }: Props) {
+export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityChange, required }: Props) {
   const [states, setStates] = useState<string[]>([]);
   const [statesLoading, setStatesLoading] = useState(true);
   const [stateSearch, setStateSearch] = useState("");
@@ -70,7 +71,7 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
       {/* ── STATE ─────────────────────────────── */}
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-          State
+          State{required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
 
         {customState ? (
@@ -160,7 +161,7 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
       {/* ── CITY / VILLAGE ────────────────────── */}
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-          City / Village
+          City / Village{required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
 
         {customCity ? (

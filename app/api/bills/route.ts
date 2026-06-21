@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
   await connectDB();
   const body = await req.json();
 
-  if (!body.customer_name || !body.bill_number || !body.date) {
-    return NextResponse.json({ error: "Date, Bill Number, and Customer Name are required." }, { status: 400 });
+  if (!body.customer_name || !body.date || !body.shop_name || !body.state || !body.city || !body.transport_name) {
+    return NextResponse.json({ error: "Date, Customer Name, Shop Name, State, City and Transport are required." }, { status: 400 });
   }
 
   const bill = await Bill.create(body);
