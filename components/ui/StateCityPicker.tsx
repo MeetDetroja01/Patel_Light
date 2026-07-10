@@ -9,7 +9,14 @@ interface Props {
   required?: boolean;
 }
 
-export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityChange, required }: Props) {
+// Smart search: starts-with matches come first, then contains matches
+function smartFilter(list: string[], query: string): string[] {
+  if (!query) return list;
+  const q = query.toLowerCase();
+  const starts = list.filter((s) => s.toLowerCase().startsWith(q));
+  const contains = list.filter((s) => !s.toLowerCase().startsWith(q) && s.toLowerCase().includes(q));
+  return [...starts, ...contains];
+}
   const [states, setStates] = useState<string[]>([]);
   const [statesLoading, setStatesLoading] = useState(true);
   const [stateSearch, setStateSearch] = useState("");
@@ -58,13 +65,8 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const filteredStates = states.filter((s) =>
-    s.toLowerCase().includes(stateSearch.toLowerCase())
-  );
-
-  const filteredCities = cities.filter((c) =>
-    c.toLowerCase().includes(citySearch.toLowerCase())
-  );
+  const filteredStates = smartFilter(states, stateSearch);
+  const filteredCities = smartFilter(cities, citySearch);
 
   return (
     <>
@@ -135,7 +137,7 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
                             : "text-slate-700 hover:bg-red-50 hover:text-[#Fd0304]"
                           }`}
                       >
-                        {s}
+                        <Highlight text={s} query={stateSearch} />
                       </button>
                     </li>
                   ))}
@@ -244,7 +246,7 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
                             : "text-slate-700 hover:bg-red-50 hover:text-[#Fd0304]"
                           }`}
                       >
-                        {c}
+                        <Highlight text={c} query={citySearch} />
                       </button>
                     </li>
                   ))}
@@ -270,6 +272,20 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+// Highlights matching part of text in red bold
+function Highlight({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <span className="font-bold text-[#Fd0304]">{text.slice(idx, idx + query.length)}</span>
+      {text.slice(idx + query.length)}
     </>
   );
 }

@@ -3,10 +3,11 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 const titles: Record<string, string> = {
-  "/dashboard/add-bill":  "Add Bill",
-  "/dashboard/customers": "Customers",
-  "/dashboard/search":    "Search & Rankings",
-  "/dashboard/analytics": "Analytics",
+  "/dashboard/add-bill":      "Add Bill",
+  "/dashboard/customers":     "Customers",
+  "/dashboard/search":        "Search & Rankings",
+  "/dashboard/analytics":     "Analytics",
+  "/dashboard/import-export": "Import & Export",
 };
 
 export function Topbar({ username }: { username: string }) {

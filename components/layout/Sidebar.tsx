@@ -5,10 +5,11 @@ import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard/add-bill",   icon: "➕", label: "Add Bill" },
-  { href: "/dashboard/customers",  icon: "📋", label: "Customers" },
-  { href: "/dashboard/search",     icon: "🔍", label: "Search" },
-  { href: "/dashboard/analytics",  icon: "📊", label: "Analytics" },
+  { href: "/dashboard/add-bill",      icon: "➕", label: "Add Bill" },
+  { href: "/dashboard/customers",     icon: "📋", label: "Customers" },
+  { href: "/dashboard/search",        icon: "🔍", label: "Search" },
+  { href: "/dashboard/analytics",     icon: "📊", label: "Analytics" },
+  { href: "/dashboard/import-export", icon: "📂", label: "Import / Export" },
 ];
 
 export function Sidebar() {
