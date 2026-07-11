@@ -9,13 +9,14 @@ interface Props {
   required?: boolean;
 }
 
-// starts-with first, then contains
+// Smart filter: exact match first, then starts-with, then contains
 function smartFilter(list: string[], query: string): string[] {
   if (!query) return list;
-  const q = query.toLowerCase();
-  const starts = list.filter((s) => s.toLowerCase().startsWith(q));
+  const q = query.toLowerCase().trim();
+  const exact   = list.filter((s) => s.toLowerCase() === q);
+  const starts  = list.filter((s) => s.toLowerCase().startsWith(q) && s.toLowerCase() !== q);
   const contains = list.filter((s) => !s.toLowerCase().startsWith(q) && s.toLowerCase().includes(q));
-  return [...starts, ...contains];
+  return [...exact, ...starts, ...contains];
 }
 
 // Highlights matching part in red bold
