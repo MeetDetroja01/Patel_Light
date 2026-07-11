@@ -105,36 +105,49 @@ export default function ImportExportPage() {
   }
 
   async function exportExcel(bills: BillRow[]) {
-    const XLSX = (await import("xlsx")).default;
-    const data = bills.map((b) =>
-      Object.fromEntries(COLUMNS.map((c) => [c.label, b[c.key as keyof BillRow] ?? ""]))
-    );
-    const ws = XLSX.utils.json_to_sheet(data);
-    ws["!cols"] = COLUMNS.map(() => ({ wch: 18 }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Bills");
-    XLSX.writeFile(wb, "patel-light-bills.xlsx");
+    try {
+      const XLSX = (await import("xlsx")).default;
+      const data = bills.map((b) =>
+        Object.fromEntries(COLUMNS.map((c) => [c.label, b[c.key as keyof BillRow] ?? ""]))
+      );
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws["!cols"] = COLUMNS.map(() => ({ wch: 20 }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Bills");
+      XLSX.writeFile(wb, "patel-light-bills.xlsx");
+    } catch (e) {
+      throw new Error("Excel export failed: " + String(e));
+    }
   }
 
   async function exportPDF(bills: BillRow[]) {
-    const { default: jsPDF } = await import("jspdf");
-    const { default: autoTable } = await import("jspdf-autotable");
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    doc.setFontSize(16);
-    doc.setTextColor(253, 3, 4);
-    doc.text("Patel Light — Bills Report", 14, 14);
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(`Generated: ${new Date().toLocaleDateString("en-IN")}  |  Total: ${bills.length} bills`, 14, 21);
-    autoTable(doc, {
-      startY: 26,
-      head: [COLUMNS.map((c) => c.label)],
-      body: bills.map((b) => COLUMNS.map((c) => String(b[c.key as keyof BillRow] ?? ""))),
-      styles: { fontSize: 7, cellPadding: 2 },
-      headStyles: { fillColor: [253, 3, 4], textColor: 255, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: [254, 242, 242] },
-    });
-    doc.save("patel-light-bills.pdf");
+    try {
+      // Use require-style dynamic import to avoid ESM/CJS mismatch
+      const jsPDFModule = await import("jspdf");
+      const jsPDF = jsPDFModule.jsPDF ?? jsPDFModule.default;
+      const autoTableModule = await import("jspdf-autotable");
+      const autoTable = autoTableModule.default ?? autoTableModule.applyPlugin;
+
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      doc.setFontSize(16);
+      doc.setTextColor(253, 3, 4);
+      doc.text("Patel Light — Bills Report", 14, 14);
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleDateString("en-IN")}  |  Total: ${bills.length} bills`, 14, 21);
+
+      autoTable(doc, {
+        startY: 26,
+        head: [COLUMNS.map((c) => c.label)],
+        body: bills.map((b) => COLUMNS.map((c) => String(b[c.key as keyof BillRow] ?? ""))),
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [253, 3, 4], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [254, 242, 242] },
+      });
+      doc.save("patel-light-bills.pdf");
+    } catch (e) {
+      throw new Error("PDF export failed: " + String(e));
+    }
   }
 
   function triggerDownload(blob: Blob, name: string) {
@@ -150,7 +163,7 @@ export default function ImportExportPage() {
       COLUMNS.map((c) => c.label),
       ["2024-01-15", "PL-001", "Sample Customer", "9876543210", "Sample Shop", "Gujarat", "Ahmedabad", "DTDC", "Item 1, Item 2", "15000"],
     ]);
-    ws["!cols"] = Array(10).fill({ wch: 18 });
+    ws["!cols"] = Array(10).fill({ wch: 20 });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     XLSX.writeFile(wb, "patel-light-template.xlsx");

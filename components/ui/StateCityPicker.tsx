@@ -58,7 +58,7 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
 
   // Fetch cities when state changes
   useEffect(() => {
-    if (!stateValue || customState) { setCities([]); return; }
+    if (!stateValue || customState) { setCities([]); setCityOpen(false); return; }
     setCitiesLoading(true);
     setCities([]);
     onCityChange("");
@@ -66,7 +66,12 @@ export function StateCityPicker({ stateValue, cityValue, onStateChange, onCityCh
     setCustomCity(false);
     fetch(`/api/locations/cities?state=${encodeURIComponent(stateValue)}`)
       .then((r) => r.json())
-      .then((d) => { setCities(d.cities || []); setCitiesLoading(false); })
+      .then((d) => {
+        setCities(d.cities || []);
+        setCitiesLoading(false);
+        // Auto-open city dropdown after cities load
+        setCityOpen(true);
+      })
       .catch(() => setCitiesLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateValue]);
